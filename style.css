@@ -175,3 +175,13 @@ code { background: var(--bg); padding: 1px 6px; border-radius: 6px; font-size: .
 ol.steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Food photos */
+.thumb { width: 56px; height: 56px; flex: none; border-radius: 10px; object-fit: cover; background: #e7eeeb; display: inline-grid; place-items: center; }
+.thumb.ph { background: hsl(var(--h, 150) 45% 90%); color: hsl(var(--h, 150) 45% 28%); font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.25rem; }
+.thumb.lg { width: 88px; height: 88px; border-radius: 14px; font-size: 2rem; }
+.food-hero { display: flex; align-items: center; gap: 12px; }
+.photo-row { display: flex; align-items: center; gap: 12px; }
+.photo-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-btns label.btn { cursor: pointer; }
+.entry .thumb { width: 48px; height: 48px; }

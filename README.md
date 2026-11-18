@@ -4,6 +4,7 @@ A small phone-first web app for logging daily meals and macros, built so a perso
 
 - Log meals (breakfast, lunch, dinner, snacks) from a quick-add list of your usual foods, or type a one-off food.
 - See calories, protein, carbs and fat against daily targets set by your trainer.
+- Real food photos for the starter foods, and a **Add photo** button (camera or gallery) for any food you add.
 - Log body weight and a note for each day.
 - See a 7-day view with a calorie chart, daily totals and averages.
 - Send a day or week summary to WhatsApp (Indonesian or English).
@@ -24,6 +25,11 @@ Live at **https://fredrickyang.github.io/nutrition-log/**
 2. Open the setup link you were given (`…/nutrition-log/#setup=<gist id>`) on your phone. Paste the token in **Settings → Sync** and tap **Connect & sync**.
 3. Add the app to your home screen (Safari: Share → Add to Home Screen; Chrome: ⋮ → Add to Home screen).
 4. In **Settings → Trainer**, add your trainer's WhatsApp number (optional), then tap **Send link**.
+
+## Photos
+
+- Starter food photos are in `img/foods/` (256 px WebP, about 9 KB each). They come from Wikimedia Commons under CC0, CC BY or CC BY-SA, and are listed with credits on `credits.html`.
+- Photos you add in the app are shrunk on the phone to a small square WebP (about 5 to 15 KB) and saved with your log, so your trainer sees them too.
 
 ## Development
 
