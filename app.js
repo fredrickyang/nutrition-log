@@ -15,27 +15,29 @@
   ];
   // Starter list: approximate values from common nutrition tables. Edit to match your labels/portions.
   const STARTER_FOODS = [
-    ['Nasi putih', '100 g, ≈½ piring', 130, 2.7, 28, 0.3],
-    ['Nasi merah', '100 g', 110, 2.6, 23, 0.9],
-    ['Dada ayam panggang', '100 g', 165, 31, 0, 3.6],
-    ['Telur rebus', '1 butir', 78, 6.3, 0.6, 5.3],
-    ['Putih telur', '1 butir', 17, 3.6, 0.2, 0.1],
-    ['Tempe', '100 g', 192, 20, 7.6, 11],
-    ['Tahu', '100 g', 76, 8, 1.9, 4.8],
-    ['Daging sapi tanpa lemak', '100 g', 217, 26, 0, 12],
-    ['Ikan fillet (dori/kakap)', '100 g', 100, 20, 0, 2],
-    ['Whey protein', '1 scoop (30 g)', 120, 24, 3, 1.5],
-    ['Oatmeal', '40 g', 150, 5, 27, 2.5],
-    ['Pisang', '1 buah sedang', 105, 1.3, 27, 0.4],
-    ['Ubi rebus', '100 g', 86, 1.6, 20, 0.1],
-    ['Kentang rebus', '100 g', 87, 1.9, 20, 0.1],
-    ['Alpukat', '½ buah, 100 g', 160, 2, 9, 15],
-    ['Sayur tumis', '1 mangkuk', 80, 3, 8, 4],
-    ['Susu UHT full cream', '250 ml', 150, 8, 12, 8],
-    ['Greek yogurt plain', '150 g', 145, 15, 6, 6],
-    ['Indomie goreng', '1 bungkus', 380, 8, 54, 15],
-    ['Kopi susu gula aren', '1 gelas', 200, 4, 30, 7],
+    ['Nasi putih', '100 g, ≈½ piring', 130, 2.7, 28, 0.3, 'nasi-putih'],
+    ['Nasi merah', '100 g', 110, 2.6, 23, 0.9, 'nasi-merah'],
+    ['Dada ayam panggang', '100 g', 165, 31, 0, 3.6, 'dada-ayam'],
+    ['Telur rebus', '1 butir', 78, 6.3, 0.6, 5.3, 'telur-rebus'],
+    ['Putih telur', '1 butir', 17, 3.6, 0.2, 0.1, 'putih-telur'],
+    ['Tempe', '100 g', 192, 20, 7.6, 11, 'tempe'],
+    ['Tahu', '100 g', 76, 8, 1.9, 4.8, 'tahu'],
+    ['Daging sapi tanpa lemak', '100 g', 217, 26, 0, 12, 'daging-sapi'],
+    ['Ikan fillet (dori/kakap)', '100 g', 100, 20, 0, 2, 'ikan-fillet'],
+    ['Whey protein', '1 scoop (30 g)', 120, 24, 3, 1.5, 'whey'],
+    ['Oatmeal', '40 g', 150, 5, 27, 2.5, 'oatmeal'],
+    ['Pisang', '1 buah sedang', 105, 1.3, 27, 0.4, 'pisang'],
+    ['Ubi rebus', '100 g', 86, 1.6, 20, 0.1, 'ubi'],
+    ['Kentang rebus', '100 g', 87, 1.9, 20, 0.1, 'kentang'],
+    ['Alpukat', '½ buah, 100 g', 160, 2, 9, 15, 'alpukat'],
+    ['Sayur tumis', '1 mangkuk', 80, 3, 8, 4, 'sayur-tumis'],
+    ['Susu UHT full cream', '250 ml', 150, 8, 12, 8, 'susu'],
+    ['Greek yogurt plain', '150 g', 145, 15, 6, 6, 'greek-yogurt'],
+    ['Indomie goreng', '1 bungkus', 380, 8, 54, 15, 'indomie-goreng'],
+    ['Kopi susu gula aren', '1 gelas', 200, 4, 30, 7, 'kopi-susu'],
   ];
+  // Starter food name → bundled photo (also matches foods saved before photos existed).
+  const STARTER_PHOTO = Object.fromEntries(STARTER_FOODS.map((r) => [r[0].toLowerCase(), `img/foods/${r[6]}.webp`]));
   const DEFAULT_TARGETS = { kcal: 0, p: 0, c: 0, f: 0 };
 
   // ---------- tiny helpers ----------
@@ -53,13 +55,14 @@
   const fmtNum = (n, lang) => r0(n).toLocaleString(lang === 'id' ? 'id-ID' : 'en-US');
   const fmtDate = (k, lang, opts = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) => parseKey(k).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-GB', opts);
   const kcalFromMacros = (p, c, f) => 4 * p + 4 * c + 9 * f;
+  const SAFE_PHOTO = /^(img\/foods\/[a-z0-9-]+\.webp|data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+)$/;
 
   // ---------- state ----------
   function freshData() {
     return {
       version: 1,
       targets: { ...DEFAULT_TARGETS }, targetsUpdatedAt: 0,
-      foods: STARTER_FOODS.map(([name, unit, kcal, p, c, f]) => ({ id: uid(), name, unit, kcal, p, c, f })),
+      foods: STARTER_FOODS.map(([name, unit, kcal, p, c, f, slug]) => ({ id: uid(), name, unit, kcal, p, c, f, photo: `img/foods/${slug}.webp` })),
       foodsUpdatedAt: 0,
       days: {},
     };
@@ -86,6 +89,40 @@
       ui.tab = 'settings';
       setTimeout(() => toast('Linked to your log. Paste your access token to start syncing.'), 300);
     }
+  }
+
+  // ---------- photos ----------
+  function photoOf(item) {
+    if (!item) return '';
+    let src = item.photo || '';
+    if (!src && item.foodId) src = data.foods.find((f) => f.id === item.foodId)?.photo || '';
+    if (!src) src = data.foods.find((f) => f.name === item.name)?.photo || STARTER_PHOTO[String(item.name || '').toLowerCase()] || '';
+    return SAFE_PHOTO.test(src) ? src : '';
+  }
+  function thumb(item, size = '') {
+    const src = photoOf(item);
+    if (src) return `<img class="thumb ${size}" src="${src}" alt="" loading="lazy" decoding="async">`;
+    const ch = String(item?.name || '?').trim().charAt(0).toUpperCase() || '?';
+    const hue = [...String(item?.name || '')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 140);
+    return `<span class="thumb ph ${size}" aria-hidden="true" style="--h:${hue}">${esc(ch)}</span>`;
+  }
+  // Shrink a camera/gallery image to a small square thumbnail (WebP when the browser can make it).
+  function shrinkPhoto(file, size = 192) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const s = Math.min(img.naturalWidth, img.naturalHeight), cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        const ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        let out = cv.toDataURL('image/webp', 0.72);
+        if (!out.startsWith('data:image/webp')) out = cv.toDataURL('image/jpeg', 0.75);
+        resolve(out);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('This image type can’t be read. Try a JPG or a screenshot.')); };
+      img.src = url;
+    });
   }
 
   // ---------- day helpers ----------
@@ -226,6 +263,7 @@
         <div class="meal-head"><h3 id="m-${m.id}">${m.en}</h3><span class="sum">${es.length ? fmtNum(mk) + ' kcal' : ''}</span></div>
         ${es.length ? `<ul class="entries">${es.map((e) => `
           <li class="entry">
+            ${thumb(e)}
             <div class="info"><div class="nm">${esc(e.name)} <span class="muted">× ${r1(e.qty)}</span></div>
             <div class="mac">${esc(e.unit || '')}${e.unit ? ' · ' : ''}P ${r0(e.p)} · C ${r0(e.c)} · F ${r0(e.f)}</div></div>
             <span class="kc">${fmtNum(e.kcal)}</span>
@@ -350,6 +388,7 @@
 
   function foodRow(f, act) {
     return `<li><button type="button" class="food-item" data-act="${act}" data-id="${f.id}">
+      ${thumb(f)}
       <div class="info"><div class="nm">${esc(f.name)}</div>
       <div class="mac">${esc(f.unit)} · P ${r1(f.p)} · C ${r1(f.c)} · F ${r1(f.f)}</div></div>
       <strong>${r0(f.kcal)}</strong><span class="small muted">kcal</span></button></li>`;
@@ -364,6 +403,7 @@
       <p class="small muted" style="margin:0 0 12px">Your quick-add list. Starter values are approximate, so adjust them to your real portions or packaging labels. Changing a food here doesn't change days you've already logged.</p>
       <input type="search" class="search" id="food-q" placeholder="Search foods" aria-label="Search foods" value="${esc(ui.foodQuery)}">
       <ul class="food-list" id="food-list">${list.map((f) => foodRow(f, 'edit-food')).join('') || '<li class="empty-state">No foods match.</li>'}</ul>
+      <p class="small muted" style="margin:12px 0 0">Tap a food to edit it or add your own photo. <a href="credits.html">Photo credits</a></p>
     </section>`;
   }
 
@@ -453,9 +493,11 @@
     const base = food ? { name: food.name, unit: food.unit, kcal: food.kcal, p: food.p, c: food.c, f: food.f }
       : entry?.perUnit ? entry.perUnit : null;
     const qty = entry ? entry.qty : 1;
+    const foodId = food?.id || entry?.foodId || '';
+    const shown = food || entry;
     const title = entry ? 'Edit entry' : 'Add ' + (base ? base.name : 'food');
     openSheet(`${sheetHead(esc(title))}
-      ${base ? `<p class="small muted" style="margin:0">1 serving = ${esc(base.unit)} · ${r0(base.kcal)} kcal</p>
+      ${base ? `<div class="food-hero">${thumb(shown, 'lg')}<p class="small muted" style="margin:0">1 serving = ${esc(base.unit)}<br>${r0(base.kcal)} kcal per serving</p></div>
         <div class="field"><label for="qty">Servings</label>
           <div class="qty"><button type="button" class="icon-btn" data-act="dec" aria-label="Less">−</button>
           <input id="qty" type="text" inputmode="decimal" value="${qty}">
@@ -495,9 +537,11 @@
           if (!base && !v.name) { $('#c-name').focus(); toast('Type the food name'); return; }
           if (v.qty <= 0) { toast('Servings must be more than 0'); return; }
           const rec = { id: entry?.id || uid(), meal: $('#e-meal').value, name: v.name, unit: v.unit, qty: r1(v.qty), kcal: r1(v.kcal), p: r1(v.p), c: r1(v.c), f: r1(v.f), perUnit: v.perUnit };
+          if (foodId) rec.foodId = foodId;
           if (entry) day.entries = day.entries.map((x) => (x.id === entry.id ? rec : x)); else day.entries.push(rec);
           if (!base && !entry && $('#c-save')?.checked) {
-            data.foods.push({ id: uid(), name: v.name, unit: v.unit || '1 porsi', kcal: r1(v.kcal), p: r1(v.p), c: r1(v.c), f: r1(v.f) });
+            const nf = { id: uid(), name: v.name, unit: v.unit || '1 porsi', kcal: r1(v.kcal), p: r1(v.p), c: r1(v.c), f: r1(v.f) };
+            data.foods.push(nf); rec.foodId = nf.id;
             data.foodsUpdatedAt = now();
           }
           putDay(ui.date, day); closeSheet(); render(); toast(entry ? 'Saved' : 'Added');
@@ -507,7 +551,15 @@
   }
 
   function foodForm(food) {
+    let photo = food ? photoOf(food) : '';
+    const photoBlock = () => `${photo ? `<img class="thumb lg" src="${photo}" alt="Photo of this food">` : thumb({ name: $('#f-name')?.value || food?.name || '?' }, 'lg')}
+      <div class="photo-btns">
+        <label class="btn" for="f-photo">${photo ? 'Change photo' : 'Add photo'}</label>
+        ${photo ? '<button type="button" class="btn ghost" data-act="rm-photo">Remove</button>' : ''}
+      </div>`;
     openSheet(`${sheetHead(food ? 'Edit food' : 'New food')}
+      <div class="photo-row" id="photo-row">${photoBlock()}</div>
+      <input type="file" id="f-photo" accept="image/*" hidden>
       <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" value="${esc(food?.name || '')}" placeholder="e.g. Nasi goreng kampung"></div>
       <div class="field"><label for="f-unit">One serving is</label><input id="f-unit" type="text" value="${esc(food?.unit || '')}" placeholder="e.g. 1 piring, 100 g, 1 scoop"></div>
       <div class="grid4">
@@ -519,15 +571,21 @@
       <p class="small muted" style="margin:0">Leave kcal blank to work it out from the macros.</p>
       <div class="btn-row">${food ? '<button type="button" class="btn danger" data-act="del">Delete</button>' : ''}<button type="button" class="btn primary" data-act="ok">Save</button></div>`, () => {
       sheetForm.oninput = null;
+      $('#f-photo').onchange = async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        try { photo = await shrinkPhoto(file); $('#photo-row').innerHTML = photoBlock(); } catch (err) { toast(err.message); }
+        e.target.value = '';
+      };
       sheetForm.onclick = (e) => {
         const b = e.target.closest('[data-act]'); if (!b) return;
         if (b.dataset.act === 'close') return closeSheet();
+        if (b.dataset.act === 'rm-photo') { photo = ''; $('#photo-row').innerHTML = photoBlock(); return; }
         if (b.dataset.act === 'del') { data.foods = data.foods.filter((x) => x.id !== food.id); data.foodsUpdatedAt = now(); persist(); closeSheet(); render(); toast('Deleted'); return; }
         if (b.dataset.act === 'ok') {
           const name = $('#f-name').value.trim(); if (!name) { $('#f-name').focus(); toast('Type a name'); return; }
           const p = num($('#f-p').value), c = num($('#f-c').value), f = num($('#f-f').value);
           const kcal = $('#f-k').value.trim() ? num($('#f-k').value) : r0(kcalFromMacros(p, c, f));
-          const rec = { id: food?.id || uid(), name, unit: $('#f-unit').value.trim() || '1 porsi', kcal, p, c, f };
+          const rec = { id: food?.id || uid(), name, unit: $('#f-unit').value.trim() || '1 porsi', kcal, p, c, f, photo: photo || 'none' };
           data.foods = food ? data.foods.map((x) => (x.id === food.id ? rec : x)) : [...data.foods, rec];
           data.foodsUpdatedAt = now(); persist(); closeSheet(); render(); toast('Saved');
         }
